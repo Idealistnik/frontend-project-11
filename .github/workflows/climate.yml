@@ -1,5 +1,5 @@
 # file: .github/workflows/testing.yml
-name: testing and lint
+name: lint
 # on – определяет события, которые запускают воркфлоу
 # Trigger the workflow on push or pull request
 on:
@@ -24,6 +24,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       # run – произвольная bash-команда
-      - run: npm ci
-      - run: npx eslint .
-      # - run: make test make lint make install
+      - run: make install
+      - run: make lint
+   
