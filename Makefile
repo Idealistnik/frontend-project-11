@@ -7,6 +7,9 @@ install:
 build:
 	NODE_ENV=production npx webpack
 
+lint-fix:
+	npx eslint . --fix 
+
 test:
 	npm test
 
