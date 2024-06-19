@@ -3,9 +3,11 @@ import path from 'path';
 
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
-import { fileURLToPath } from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { fileURLToPath } from 'url';// добавил
+import process from 'node:process'; // добавил
+
+const __filename = fileURLToPath(import.meta.url);// добавил
+const __dirname = path.dirname(__filename);// добавил
 
 const isProduction = process.env.NODE_ENV === 'production';
 
