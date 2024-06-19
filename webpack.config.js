@@ -3,80 +3,72 @@ import path from 'path';
 
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';// добавил
+import TerserPlugin from 'terser-webpack-plugin';
 import { fileURLToPath } from 'url';// добавил
 import process from 'node:process'; // добавил
 
 const __filename = fileURLToPath(import.meta.url);// добавил
 const __dirname = path.dirname(__filename);// добавил
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'production'; // неправильно наверное сделал сверху импорт
 
-const stylesHandler = MiniCssExtractPlugin.loader;
+// const stylesHandler = MiniCssExtractPlugin.loader;
 
 const config = {
   entry: path.resolve(__dirname, './src/index.js'),
   output: {
     filename: "[name][contenthash].js",
     path: path.resolve(__dirname, 'dist'),
-    clean: true,
+    clean: true, // должно удалять дист перед сборкой - кажется не удаляет
   },
   devServer: {
-    open: true,
-    host: 'localhost',
-    port: 8080,
-    watchFiles: ['./index.html', './src/**/*'],
+    open: true, 
+    // host: 'localhost',
+    port: 5000,
+    watchFiles: ['./index.html', './src/**/*'], // реагирует на изменения не только js файла
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: 'index.html',
+      template: path.resolve(__dirname, './index.html'),
     }),
 
-    new MiniCssExtractPlugin(),
-
-    // Add your plugins here
-    // Learn more about plugins from https://webpack.js.org/configuration/plugins/
+    new MiniCssExtractPlugin({
+      filename: "[name][contenthash].css",
+    }),
   ],
+
   module: {
     rules: [
       {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env'],
-          },
-        },
-      },
-      {
-        test: /\.(js|jsx)$/i,
-        loader: 'babel-loader',
-      },
-
-      {
         test: /\.s[ac]ss$/i,
-        use: [stylesHandler, 'css-loader', 'postcss-loader', 'sass-loader'],
+        use: [MiniCssExtractPlugin.loader, 'css-loader', 'postcss-loader', 'sass-loader'], // работает справа налево
       },
-      {
-        test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
-        type: 'asset',
-      },
-      // {
-      //   test: /\.woff2?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-      //   use: 'url-loader?limit=10000',
-      // },
-      // {
-      //   test: /\.(ttf|eot|svg)(\?[\s\S]+)?$/,
-      //   use: 'file-loader',
-      // },
-      // { test: /\.css$/, use: ['style-loader', 'css-loader', 'postcss-loader'] },
-      // {
-      //   test: /\.scss$/,
-      //   use: ['style-loader', 'css-loader', 'sass-loader', 'postcss-loader'],
-      // },
-
       // Add your rules for custom modules here
       // Learn more about loaders from https://webpack.js.org/loaders/
+    ],
+  },
+  optimization: { // есть указываем то перезатираем стандартную оптимизацию поэтому добавили TerserPlugin для jsфайла
+    // minimize: true, // если нужно минимизировать для дева тоже 
+    minimizer: [
+      new CssMinimizerPlugin({
+        minimizerOptions: {
+          preset: [
+            "default",
+            {
+              discardComments: { removeAll: true },
+            },
+          ],
+        },
+      }),
+      new TerserPlugin({ // чтобы не было лишнего файла с лицензией
+        terserOptions: {
+          format: {
+            comments: false,
+          },
+        },
+        extractComments: false,
+      }),
     ],
   },
 };
