@@ -17,6 +17,4 @@ export default (elements, watchedState, path, currentValue) => {
     case ('default'):
       break;
   }
-
-
 };

@@ -1,6 +1,33 @@
 import * as yup from 'yup';
 import onChange from 'on-change';
+import i18next from 'i18next';
 import renderErrors from './render.js';
+import resources from './locales/index.js';
+
+const validateUrl = (url, watchedState, elements, i18n) => {
+  yup.setLocale({
+    mixed: {
+      required: i18n.t('errors.validation.required'),
+      notOneOf: i18n.t('errors.validation.notOneOf'),
+    },
+    string: {
+      url: i18n.t('errors.validation.valid'),
+    }
+  });
+  const schema = yup.string().url().required().notOneOf(watchedState.form.validUrls);
+  schema.validate(url)
+    .then(() => {
+      watchedState.form.error = '';
+      watchedState.form.validUrls.push(url);
+      watchedState.form.status = 'valid';
+    })
+    .catch((e) => {
+      watchedState.form.error = e.message;
+      console.log(watchedState.form.error);
+      watchedState.form.status = 'invalid';
+      elements.input.focus();
+    });
+};
 
 export default () => {
 
@@ -17,28 +44,21 @@ export default () => {
     errorElement: document.querySelector('.feedback'),
   };
 
-  const watchedState = onChange(state, (path, currentValue) => renderErrors(elements, watchedState, path, currentValue));
+  const i18n = i18next.createInstance();
+  const defaultLang = 'ru';
 
-  elements.form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const currentInput = event.target.querySelector('[name="url"]');
-    const currentUrl = currentInput.value;
-
-    const schema = yup.string()
-      .required('Поле должно быть заполнено')
-      .url('Ссылка должна быть валидным URL')
-      .notOneOf(state.form.validUrls, 'RSS уже существует');
-
-    schema.validate(currentUrl)
-      .then(() => {
-        watchedState.form.error = '';
-        watchedState.form.validUrls.push(currentUrl);
-        watchedState.form.status = 'valid';
-      })
-      .catch((e) => {
-        watchedState.form.error = e.message;
-        watchedState.form.status = 'invalid';
-        elements.input.focus(); // не получается в рендере обработать случай когда ошибка та же и нужно фокус поставить, тут нельзя?
+  i18n.init({
+    debug: false,
+    lng: defaultLang,
+    resources,
+  })
+    .then(() => {
+      const watchedState = onChange(state, (path, currentValue) => renderErrors(elements, watchedState, path, currentValue));
+      elements.form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const currentInput = event.target.querySelector('[name="url"]');
+        const currentUrl = currentInput.value;
+        validateUrl(currentUrl, watchedState, elements, i18n);
       });
-  });
+    })
 };
