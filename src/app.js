@@ -16,7 +16,7 @@ const addFidAndPosts = (data, watchedState) => {
     title,
     description,
   }
-  watchedState.fids.push(newFid);
+  watchedState.fids.unshift(newFid);
   const posts = data.querySelectorAll('item');
   posts.forEach((post) => {
     const title = post.querySelector('title').textContent;
@@ -29,7 +29,7 @@ const addFidAndPosts = (data, watchedState) => {
       description,
       link,
     }
-    watchedState.posts.push(newPost);
+    watchedState.posts.unshift(newPost);
     console.log(JSON.stringify(watchedState, null, '    '));
   
   })
@@ -63,6 +63,7 @@ const validateUrl = (url, watchedState, elements, i18n) => {
             watchedState.form.validUrls.push(url);
             watchedState.status = 'downloadedSuccess';
             addFidAndPosts(data, watchedState);
+            watchedState.status = 'rendering';
           }
         })
         .catch(() => {
@@ -93,6 +94,8 @@ export default () => {
     input: document.querySelector('#url-input'),
     errorElement: document.querySelector('.feedback'),
     submitButton: document.querySelector('.rss-form button'),
+    postsContainer: document.querySelector('.posts'),
+    fidsContainer: document.querySelector('.feeds'),
   };
   const i18n = i18next.createInstance();
   const defaultLang = 'ru';

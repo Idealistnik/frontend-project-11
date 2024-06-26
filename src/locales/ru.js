@@ -15,5 +15,12 @@ export default {
         downloaded: 'RSS успешно загружен',
       }
     },
+    posts: {
+      title: 'Посты',
+      button: 'Просмотр',
+    },
+    fids: {
+      title: 'Фиды',
+    }
   }
 };
