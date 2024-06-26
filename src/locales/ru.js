@@ -9,6 +9,11 @@ export default {
         valid: 'Ссылка должна быть валидным URL',
         notOneOf: 'RSS уже существует',
       },
+      request: {
+        network: 'Ошибка сети',
+        valid: 'Ресурс не содержит валидный RSS',
+        downloaded: 'RSS успешно загружен',
+      }
     },
   }
 };
