@@ -68,7 +68,7 @@ const addFids = (watchedState, i18n, elements) => {
 
 };
 
-export default (elements, watchedState, i18n, path, currentValue, previousValue) => {
+export default (elements, watchedState, i18n, path, currentValue) => {
 
   const { form, input, errorElement, submitButton } = elements;
 
@@ -119,10 +119,6 @@ export default (elements, watchedState, i18n, path, currentValue, previousValue)
       }
       break;
 
-    // case ('posts'):
-
-    //   addPosts(watchedState, i18n, elements);
-    //   break;
     case ('default'):
       break;
   }
