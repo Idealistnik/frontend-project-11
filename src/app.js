@@ -1,7 +1,7 @@
 import * as yup from 'yup';
 import onChange from 'on-change';
 import i18next from 'i18next';
-import renderErrors from './render.js';
+import render from './render.js';
 import resources from './locales/index.js';
 import axios from 'axios';
 import rssParser from './parser.js';
@@ -21,8 +21,9 @@ const validateUrl = (url, watchedState, elements, i18n) => {
   return schema.validate(url)
     .then((validUrl) => {
       watchedState.form.error = '';
-      watchedState.form.validUrls.push(validUrl);
-      watchedState.status = 'downloading';
+      // watchedState.form.validUrls.push(validUrl); убрал отсюда т.к. попадали ссылки без rss
+      // watchedState.status = 'downloading';
+      watchedState.status = 'downloadStart'; // добавил тут
       return Promise.resolve(validUrl);
     })
     .catch((e) => {
@@ -32,94 +33,88 @@ const validateUrl = (url, watchedState, elements, i18n) => {
     });
 };
 const downloadData = (watchedState, validatedUrl, i18n) => {
-
   return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(validatedUrl)}`)
     .then((response) => {
       const data = rssParser(response.data.contents);
       const error = data.querySelector('parsererror');
       if (error) {
-        watchedState.status = 'downloadedFail';
         watchedState.form.error = i18n.t('errors.request.valid');
-        return Promise.reject(i18n.t('errors.request.valid'));
+        watchedState.status = 'downloadFinish';
+        console.log(JSON.stringify(watchedState, null, '   '));
+        return;
+        // return Promise.reject(i18n.t('errors.request.valid'));
       } else if (!error) {
-        // watchedState.form.validUrls.push(validatedUrl);
-        watchedState.status = 'downloadedSuccess';
-        // console.log(data);
-        // console.log(JSON.stringify(watchedState, null, '    '));
+        watchedState.form.validUrls.push(validatedUrl); // почему тут видно ссылку?
+        watchedState.status = 'downloadFinish';
         return Promise.resolve(data);
       }
     })
     .catch((e) => {
       watchedState.form.error = i18n.t('errors.request.network');
-      watchedState.status = 'downloadedFail';
       return Promise.reject(e);
     });
 };
-const processingData = (data, watchedState) => {
-  const { fids, posts } = watchedState;
-
+const processData = (data, watchedState) => {
   const title = data.querySelector('title').textContent;
   const description = data.querySelector('description').textContent;
-  const newPosts = data.querySelectorAll('item');
-
-  if (!fids.find((fid) => fid.title === title)) {
-    const newFid = {
+  const posts = data.querySelectorAll('item');
+  const newFid = {
+    id: uniqueId(),
+    title,
+    description,
+  }
+  watchedState.fids.unshift(newFid);
+  posts.forEach((currentPost) => {
+    const title = currentPost.querySelector('title').textContent;
+    const description = currentPost.querySelector('description').textContent;
+    const link = currentPost.querySelector('link').textContent;
+    const post = {
       id: uniqueId(),
+      idFid: newFid.id,
       title,
       description,
-    }
-    watchedState.fids.unshift(newFid);
-
-    newPosts.forEach((post) => {
-      const title = post.querySelector('title').textContent;
-      const description = post.querySelector('description').textContent;
-      const link = post.querySelector('link').textContent;
-      const newPost = {
-        id: uniqueId(),
-        idFid: newFid.id,
-        title,
-        description,
-        link,
-      }
-      watchedState.posts.unshift(newPost);
-      // console.log(JSON.stringify(watchedState, null, '    '));
-    })
-    watchedState.status = 'rendering';
-    return;
-  }
-  const currentFid = fids.find((fid) => fid.title === title);
-  console.log(currentFid);
-  newPosts.forEach((post) => {
-    const title = post.querySelector('title').textContent;
-    const description = post.querySelector('description').textContent;
-    const link = post.querySelector('link').textContent;
-
-    if (!posts.find((post) => post.title === title)) {
-      const newPost = {
-        id: uniqueId(),
-        idFid: currentFid.id,
-        title,
-        description,
-        link,
-      }
-      watchedState.posts.unshift(newPost);
-    }
-  })
+      link,
+    };
+    watchedState.posts.unshift(post);
+  });
   watchedState.status = 'rendering';
+  return;
 };
-
-// const newFunc = (watchedState, validatedUrl, i18n) => {
-//   downloadData(watchedState, validatedUrl, i18n)
-//     .then((data) => processingData(data, watchedState))
-// };
-const updateFids = (watchedState, i18n) => {
-  const promises = watchedState.form.validUrls.map((url) => downloadData(watchedState, url, i18n)
-    .then((data) => processingData(data, watchedState))
+const checkPosts = (validatedUrl, watchedState) => {
+  const { fids, posts } = watchedState;
+  return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(validatedUrl)}`)
+    .then((response) => {
+      const data = rssParser(response.data.contents);
+      const titleFid = data.querySelector('title').textContent;
+      const currentPosts = data.querySelectorAll('item');
+      currentPosts.forEach((post) => {
+        const title = post.querySelector('title').textContent;
+        const description = post.querySelector('description').textContent;
+        const link = post.querySelector('link').textContent;
+        if (!posts.find((post) => post.title === title)) {
+          const currentFidId = fids.find((fid) => fid.title = titleFid);
+          const newPost = {
+            id: uniqueId(),
+            idFid: currentFidId,
+            title,
+            description,
+            link,
+          }
+          watchedState.posts.unshift(newPost);
+          //  console.log(JSON.stringify(watchedState.posts.length, null, '    '));
+        }
+      })
+    })
+    .catch((e) => {
+      return Promise.reject(e);
+    });
+};
+const updatePosts = (watchedState) => {
+  const promises = watchedState.form.validUrls.map((validatedUrl) => checkPosts(validatedUrl, watchedState)
     .catch((e) => console.log(e)));
   return Promise.all(promises)
-    .then(() => setTimeout(() => updateFids(watchedState, i18n), 5000));
+    .then(() => setTimeout(() => updatePosts(watchedState), 5000));
 };
-
 
 export default () => {
   const state = {
@@ -147,23 +142,21 @@ export default () => {
     resources,
   })
     .then(() => {
-      const watchedState = onChange(state, (path, currentValue, previousValue) => renderErrors(elements, watchedState, i18n, path, currentValue, previousValue));
+      
+      const watchedState = onChange(state, (path, currentValue, previousValue) => render(elements, watchedState, i18n, path, currentValue, previousValue));
+      watchedState.status = 'filling';
       elements.form.addEventListener('submit', (event) => {
         event.preventDefault();
-        watchedState.status = 'filling';
         const currentInput = event.target.querySelector('[name="url"]');
         const currentUrl = currentInput.value;
         validateUrl(currentUrl, watchedState, elements, i18n)
           .then((validatedUrl) => downloadData(watchedState, validatedUrl, i18n))
-          .then((data) => processingData(data, watchedState))
-          .catch((e) => console.log(e)); // лишний если есть внутри validate?
+          .then((data) => processData(data, watchedState))
+          .catch((e) => console.log(e)); // в любом случае нужен кетч даже если он внутри validateUrl?
       });
-      setTimeout(() => updateFids(watchedState, i18n), 5000);
+      setTimeout(() => updatePosts(watchedState), 5000);
     })
 };
-
-
-
 
 
 // console.log(JSON.stringify(watchedState, null, '    '));
@@ -176,3 +169,13 @@ export default () => {
 //   }, 1000);
 // })
 // .catch((e) => console.log(e)); // лишний если есть внутри validate?
+
+
+
+// const updateFids = (watchedState, i18n) => {
+//   const promises = watchedState.form.validUrls.map((url) => downloadData(watchedState, url, i18n)
+//     .then((data) => processingCurrentData(data, watchedState))
+//     .catch((e) => console.log(e)));
+//   return Promise.all(promises)
+//     .then(() => setTimeout(() => updateFids(watchedState, i18n), 5000));
+// };

@@ -1,9 +1,5 @@
 
-import isEmpty from 'lodash/isEmpty.js';
-
-const addPosts = (watchedState, i18n, elements) => {
-  const { postsContainer } = elements;
-  const { posts } = watchedState;
+const renderPosts = (postsContainer, posts, i18n) => {
   postsContainer.innerHTML = '';
   const container = document.createElement('div');
   container.classList.add('card', 'border-0');
@@ -33,9 +29,7 @@ const addPosts = (watchedState, i18n, elements) => {
   postsContainer.append(postsList);
 };
 
-const addFids = (watchedState, i18n, elements) => {
-  const { fidsContainer } = elements;
-  const { fids } = watchedState;
+const renderFeeds = (fidsContainer, fids, i18n) => {
   fidsContainer.innerHTML = '';
   const container = document.createElement('div');
   container.classList.add('card', 'border-0');
@@ -68,57 +62,76 @@ const addFids = (watchedState, i18n, elements) => {
 
 };
 
+const renderError = (errorElement, input, eror) => {
+  errorElement.textContent = eror;
+  errorElement.classList.remove('text-success');
+  errorElement.classList.add('text-danger');
+  input.classList.add('is-invalid');
+  input.focus();
+};
+
+const clearError = (errorElement, input) => {
+  errorElement.textContent = '';
+  input.classList.remove('is-invalid');
+  errorElement.classList.remove('text-danger');
+  input.focus();
+};
+
+const renderDownload = (input, submitButton, errorElement, i18n, form) => {
+
+  if (form.error === '') {
+    input.removeAttribute('readonly');
+    submitButton.removeAttribute('disabled');
+    errorElement.classList.remove('text-danger');
+    errorElement.classList.add('text-success');
+    errorElement.textContent = i18n.t('errors.request.downloaded');
+    input.value = '';
+    input.focus();
+    return;
+  }
+  input.removeAttribute('readonly');
+  submitButton.removeAttribute('disabled');
+
+};
+
 export default (elements, watchedState, i18n, path, currentValue) => {
 
-  const { form, input, errorElement, submitButton } = elements;
+  const { input, errorElement, submitButton, fidsContainer, postsContainer } = elements;
+  const { posts, fids, form } = watchedState;
 
   switch (path) {
 
     case ('form.error'):
-      if (currentValue !== '') {
-        errorElement.textContent = currentValue;
-        errorElement.classList.remove('text-success');
-        errorElement.classList.add('text-danger');
-        input.classList.add('is-invalid');
-        input.focus();
+      if (currentValue) {
+        renderError(errorElement, input, currentValue);
         return;
       }
-      if (currentValue === '') {
-        errorElement.textContent = '';
-        input.classList.remove('is-invalid');
-        input.focus();
-        errorElement.classList.remove('text-danger');
-        return;
-      }
+      clearError(errorElement, input);
       break;
-
+   
     case ('status'):
-      if (currentValue === 'downloading') {
+    
+      if (currentValue === 'downloadStart') {
         input.setAttribute('readonly', 'true');
         submitButton.setAttribute('disabled', '');
         return;
       }
-      if (currentValue === 'downloadedSuccess') {
-        input.removeAttribute('readonly');
-        submitButton.removeAttribute('disabled');
-        errorElement.classList.remove('text-danger');
-        errorElement.classList.add('text-success');
-        errorElement.textContent = i18n.t('errors.request.downloaded');
-        input.value = '';
-        input.focus();
+
+      if (currentValue === 'downloadFinish') {
+        renderDownload(input, submitButton, errorElement, i18n, form);
         return;
       }
-      if (currentValue === 'downloadedFail') {
-        input.removeAttribute('readonly');
-        submitButton.removeAttribute('disabled');
-        return;
-      }
+
       if (currentValue === 'rendering') {
-        addFids(watchedState, i18n, elements);
-        addPosts(watchedState, i18n, elements);
+        renderFeeds(fidsContainer, fids, i18n);
+        renderPosts(postsContainer, posts, i18n);
       }
       break;
 
+      case ('posts'):
+        renderPosts(postsContainer, posts, i18n); // получается посты обновляются не только каждые 5 сек, но и сразу полед загрузки нового фида?
+        break;
+  
     case ('default'):
       break;
   }
