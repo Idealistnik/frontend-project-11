@@ -24,7 +24,8 @@ const validateUrl = (url, watchedState, elements, i18n) => {
       // watchedState.form.validUrls.push(validUrl); убрал отсюда т.к. попадали ссылки без rss
       // watchedState.status = 'downloading';
       watchedState.status = 'downloadStart'; // добавил тут
-      return Promise.resolve(validUrl);
+      return validUrl;
+      // return Promise.resolve(validUrl);
     })
     .catch((e) => {
       watchedState.form.error = e.message;
@@ -32,6 +33,7 @@ const validateUrl = (url, watchedState, elements, i18n) => {
       return Promise.reject(e);
     });
 };
+
 const downloadData = (watchedState, validatedUrl, i18n) => {
   return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(validatedUrl)}`)
     .then((response) => {
@@ -41,19 +43,21 @@ const downloadData = (watchedState, validatedUrl, i18n) => {
         watchedState.form.error = i18n.t('errors.request.valid');
         watchedState.status = 'downloadFinish';
         console.log(JSON.stringify(watchedState, null, '   '));
-        return;
-        // return Promise.reject(i18n.t('errors.request.valid'));
-      } else if (!error) {
-        watchedState.form.validUrls.push(validatedUrl); // почему тут видно ссылку?
+        return Promise.reject(new Error(i18n.t('errors.request.valid')));
+      } else {
+        watchedState.form.validUrls.push(validatedUrl);
         watchedState.status = 'downloadFinish';
-        return Promise.resolve(data);
+        return data;
       }
     })
-    .catch((e) => {
-      watchedState.form.error = i18n.t('errors.request.network');
-      return Promise.reject(e);
+    .catch((error) => {
+      if (error.message !== i18n.t('errors.request.valid')) {
+        watchedState.form.error = i18n.t('errors.request.network');
+      }
+      return Promise.reject(error);
     });
 };
+
 const processData = (data, watchedState) => {
   const title = data.querySelector('title').textContent;
   const description = data.querySelector('description').textContent;
@@ -113,7 +117,7 @@ const updatePosts = (watchedState) => {
   const promises = watchedState.form.validUrls.map((validatedUrl) => checkPosts(validatedUrl, watchedState)
     .catch((e) => console.log(e)));
   return Promise.all(promises)
-    .then(() => setTimeout(() => updatePosts(watchedState), 5000));
+    .then(() => setTimeout(() => updatePosts(watchedState), 0));
 };
 
 export default () => {
@@ -125,6 +129,10 @@ export default () => {
     status: '',
     fids: [],
     posts: [],
+    ui: {
+      visitedLinks: [],
+      modalLinkId: null,
+    }
   };
   const elements = {
     form: document.querySelector('.rss-form'),
@@ -133,6 +141,15 @@ export default () => {
     submitButton: document.querySelector('.rss-form button'),
     postsContainer: document.querySelector('.posts'),
     fidsContainer: document.querySelector('.feeds'),
+    modalContainer: document.querySelector('.modal'),
+    modalTitle: document.querySelector('.modal-title'),
+    modalBody: document.querySelector('.modal-body'),
+    modalCloseButton: document.querySelector('.close'),
+    // modalContent: document.querySelector('.modal-content'),
+    modalFooter: document.querySelector('.modal-footer'),
+    modalFooterCloseButton: document.querySelector('[data-bs-dismiss="modal"].btn-secondary'),
+    body: document.querySelector('body'),
+
   };
   const i18n = i18next.createInstance();
   const defaultLang = 'ru';
@@ -142,8 +159,8 @@ export default () => {
     resources,
   })
     .then(() => {
-      
-      const watchedState = onChange(state, (path, currentValue, previousValue) => render(elements, watchedState, i18n, path, currentValue, previousValue));
+
+      const watchedState = onChange(state, (path, currentValue, applyData) => render(elements, watchedState, i18n, path, currentValue, applyData));
       watchedState.status = 'filling';
       elements.form.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -155,7 +172,27 @@ export default () => {
           .catch((e) => console.log(e)); // в любом случае нужен кетч даже если он внутри validateUrl?
       });
       setTimeout(() => updatePosts(watchedState), 5000);
-    })
+      elements.postsContainer.addEventListener('click', (event) => {
+        // event.preventDefault();
+        if (event.target.matches('a')) { // или event.target.tagName === 'A'
+          const id = event.target.dataset.id;
+          watchedState.ui.visitedLinks.push(id);
+        }
+        if (event.target.matches('button')) {
+          const link = event.target.previousElementSibling;
+          const id = link.dataset.id;
+          watchedState.ui.visitedLinks.push(id);
+          watchedState.ui.modalLinkId = id;
+        }
+      });
+  
+      elements.modalContainer.querySelectorAll('[data-bs-dismiss="modal"]').forEach((closeButton) => {
+        closeButton.addEventListener('click', (event) => {
+          event.preventDefault();
+          watchedState.ui.modalLinkId = null;
+        })
+      });
+    });
 };
 
 
