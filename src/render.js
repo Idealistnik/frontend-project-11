@@ -98,13 +98,11 @@ const renderModal = (modalContainer, body, ui, posts, modalTitle, modalBody, mod
 
   const footerLink = modalFooter.querySelector('a');
   const footerButton = modalFooter.querySelector('button');
-
   footerLink.outerHTML = `<a class="btn btn-primary full-article" href="${postLink}" role="button" target="_blank" rel="noopener noreferrer">Читать полностью </a>`;
-
   footerButton.outerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>';
 };
 
-const renderModalClose = (modalContainer, body, ui, posts, modalTitle, modalBody, modalFooter) => {
+const renderModalClose = (modalContainer, body) => {
   body.classList.remove('modal-open');
   body.setAttribute('style', '');
   body.removeAttribute('overflow: hidden; padding-right: 16px;');
@@ -114,14 +112,10 @@ const renderModalClose = (modalContainer, body, ui, posts, modalTitle, modalBody
   modalContainer.removeAttribute('aria-modal');
   modalContainer.setAttribute('style', 'display: none;');
 
-  modalTitle.textContent = '';
-  modalBody.textContent = '';
-
-  const footerLink = modalFooter.querySelector('a');
-  const footerButton = modalFooter.querySelector('button');
+  const footerLink = document.querySelector('.modal-footer a');
+  const footerButton = document.querySelector('.modal-footer button');
 
   footerLink.outerHTML = '<a class="btn btn-primary full-article" href="#" role="button" target="_blank" rel="noopener noreferrer">Читать полностью </a>';
-
   footerButton.outerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>';
 };
 
@@ -148,12 +142,10 @@ export default (elements, watchedState, i18n, path, currentValue) => {
       if (currentValue === 'downloadStart') {
         input.setAttribute('readonly', 'true');
         submitButton.setAttribute('disabled', '');
-        return;
       }
 
       if (currentValue === 'downloadFinish') {
         renderDownload(input, submitButton, errorElement, i18n, form);
-        return;
       }
 
       if (currentValue === 'rendering') {
@@ -175,7 +167,7 @@ export default (elements, watchedState, i18n, path, currentValue) => {
         renderModal(modalContainer, body, ui, posts, modalTitle, modalBody, modalFooter);
         return;
       }
-      renderModalClose(modalContainer, body, ui, posts, modalTitle, modalBody, modalFooter);
+      renderModalClose(modalContainer, body);
       break;
 
     default:

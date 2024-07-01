@@ -8,16 +8,16 @@ import TerserPlugin from 'terser-webpack-plugin';
 import { fileURLToPath } from 'url';
 import process from 'node:process';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
 const isProduction = process.env.NODE_ENV === 'production';
 
 const config = {
-  entry: path.resolve(__dirname, './src/index.js'),
+  entry: path.resolve(dirname, './src/index.js'),
   output: {
     filename: '[name][contenthash].js',
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(dirname, 'dist'),
     clean: true,
   },
   devServer: {
@@ -27,7 +27,7 @@ const config = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, './index.html'),
+      template: path.resolve(dirname, './index.html'),
     }),
 
     new MiniCssExtractPlugin({

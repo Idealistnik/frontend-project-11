@@ -1,8 +1,8 @@
 {
   "name": "@hexlet/code",
   "version": "1.0.0",
-  "description": "My webpack project",
-  "main": "index.js",
+  "description": "https://frontend-project-11-blush-five.vercel.app/",
+  "main": ".src/index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

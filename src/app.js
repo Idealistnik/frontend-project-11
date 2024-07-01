@@ -21,11 +21,8 @@ const validateUrl = (url, watchedState, elements, i18n) => {
   return schema.validate(url)
     .then((validUrl) => {
       watchedState.form.error = '';
-      // watchedState.form.validUrls.push(validUrl); убрал отсюда т.к. попадали ссылки без rss
-      // watchedState.status = 'downloading';
-      watchedState.status = 'downloadStart'; // добавил тут
+      watchedState.status = 'downloadStart';
       return validUrl;
-      // return Promise.resolve(validUrl);
     })
     .catch((e) => {
       watchedState.form.error = e.message;
@@ -93,7 +90,7 @@ const checkPosts = (validatedUrl, watchedState) => {
         const description = currentPost.querySelector('description').textContent;
         const link = currentPost.querySelector('link').textContent;
         if (!posts.find((post) => post.title === title)) {
-          const currentFidId = fids.find((fid) => fid.title = titleFid);
+          const currentFidId = fids.find((fid) => fid.title === titleFid);
           const newPost = {
             id: uniqueId(),
             idFid: currentFidId,
@@ -141,11 +138,9 @@ export default () => {
     modalTitle: document.querySelector('.modal-title'),
     modalBody: document.querySelector('.modal-body'),
     modalCloseButton: document.querySelector('.close'),
-    // modalContent: document.querySelector('.modal-content'),
     modalFooter: document.querySelector('.modal-footer'),
     modalFooterCloseButton: document.querySelector('[data-bs-dismiss="modal"].btn-secondary'),
     body: document.querySelector('body'),
-
   };
   const i18n = i18next.createInstance();
   const defaultLang = 'ru';
@@ -155,7 +150,10 @@ export default () => {
     resources,
   })
     .then(() => {
-      const watchedState = onChange(state, (path, currentValue) => render(elements, watchedState, i18n, path, currentValue));
+      const watchedState = onChange(
+        state,
+        (path, currentValue) => render(elements, watchedState, i18n, path, currentValue),
+      );
       updatePosts(watchedState);
       watchedState.status = 'filling';
       elements.form.addEventListener('submit', (event) => {
