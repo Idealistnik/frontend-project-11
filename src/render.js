@@ -1,20 +1,22 @@
-
-const renderPosts = (postsContainer, posts, i18n, ui) => {
-  postsContainer.innerHTML = '';
-  const container = document.createElement('div');
-  container.classList.add('card', 'border-0');
+const generateContainer = (container, i18n) => {
+  container.innerHTML = '';
+  const container1 = document.createElement('div');
+  container1.classList.add('card', 'border-0');
   const titleContainer = document.createElement('div');
   titleContainer.classList.add('card-body');
   const title = document.createElement('h2');
   title.classList.add('card-title', 'h4');
   title.textContent = i18n.t('posts.title');
-  container.append(titleContainer);
+  container1.append(titleContainer);
   titleContainer.append(title);
-  postsContainer.append(container);
+  container.append(container1);
+  const list = document.createElement('ul');
+  list.classList.add('list-group', 'border-0', 'rounded-0');
+  return list;
+};
 
-  const postsList = document.createElement('ul');
-  postsList.classList.add('list-group', 'border-0', 'rounded-0');
-
+const renderPosts = (postsContainer, posts, i18n, ui) => {
+  const postsList = generateContainer(postsContainer, i18n);
   posts.forEach((post) => {
     const listItem = document.createElement('li');
     listItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
@@ -31,25 +33,10 @@ const renderPosts = (postsContainer, posts, i18n, ui) => {
 };
 
 const renderFeeds = (fidsContainer, fids, i18n) => {
-  fidsContainer.innerHTML = '';
-  const container = document.createElement('div');
-  container.classList.add('card', 'border-0');
-  const titleContainer = document.createElement('div');
-  titleContainer.classList.add('card-body');
-  const title = document.createElement('h2');
-  title.classList.add('card-title', 'h4');
-  title.textContent = i18n.t('fids.title');
-  container.append(titleContainer);
-  titleContainer.append(title);
-  fidsContainer.append(container);
-
-  const fidsList = document.createElement('ul');
-  fidsList.classList.add('list-group', 'border-0', 'rounded-0');
-
+  const fidsList = generateContainer(fidsContainer, i18n);
   fids.forEach((fid) => {
     const listItem = document.createElement('li');
     listItem.classList.add('list-group-item', 'border-0', 'border-end-0');
-
     const title = document.createElement('h3');
     title.classList.add('h6', 'm-0');
     title.textContent = fid.title;
@@ -143,8 +130,6 @@ const renderModalClose = (modalContainer, body, ui, posts, modalTitle, modalBody
 
   footerButton.outerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>';
 };
-
-
 
 export default (elements, watchedState, i18n, path, currentValue) => {
 

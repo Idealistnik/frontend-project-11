@@ -53,6 +53,7 @@ const downloadData = (watchedState, validatedUrl, i18n) => {
     .catch((error) => {
       if (error.message !== i18n.t('errors.request.valid')) {
         watchedState.form.error = i18n.t('errors.request.network');
+        watchedState.status = 'downloadFinish';
       }
       return Promise.reject(error);
     });
