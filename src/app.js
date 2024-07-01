@@ -118,7 +118,7 @@ const updatePosts = (watchedState) => {
   const promises = watchedState.form.validUrls.map((validatedUrl) => checkPosts(validatedUrl, watchedState)
     .catch((e) => console.log(e)));
   return Promise.all(promises)
-    .then(() => setTimeout(() => updatePosts(watchedState), 0));
+    .then(() => setTimeout(() => updatePosts(watchedState), 5000));
 };
 
 export default () => {
@@ -162,6 +162,7 @@ export default () => {
     .then(() => {
 
       const watchedState = onChange(state, (path, currentValue, applyData) => render(elements, watchedState, i18n, path, currentValue, applyData));
+      updatePosts(watchedState);
       watchedState.status = 'filling';
       elements.form.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -172,7 +173,7 @@ export default () => {
           .then((data) => processData(data, watchedState))
           .catch((e) => console.log(e)); // в любом случае нужен кетч даже если он внутри validateUrl?
       });
-      setTimeout(() => updatePosts(watchedState), 5000);
+      // setTimeout(() => updatePosts(watchedState), 50000);
       elements.postsContainer.addEventListener('click', (event) => {
         // event.preventDefault();
         if (event.target.matches('a')) { // или event.target.tagName === 'A'
@@ -184,15 +185,22 @@ export default () => {
           const id = link.dataset.id;
           watchedState.ui.visitedLinks.push(id);
           watchedState.ui.modalLinkId = id;
+          
+          elements.modalContainer.querySelectorAll('[data-bs-dismiss="modal"]').forEach((closeButton) => {
+            closeButton.addEventListener('click', (event) => {
+              event.preventDefault();
+              watchedState.ui.modalLinkId = null;
+            })
+          });
         }
       });
   
-      elements.modalContainer.querySelectorAll('[data-bs-dismiss="modal"]').forEach((closeButton) => {
-        closeButton.addEventListener('click', (event) => {
-          event.preventDefault();
-          watchedState.ui.modalLinkId = null;
-        })
-      });
+      // elements.modalContainer.querySelectorAll('[data-bs-dismiss="modal"]').forEach((closeButton) => {
+      //   closeButton.addEventListener('click', (event) => {
+      //     event.preventDefault();
+      //     watchedState.ui.modalLinkId = null;
+      //   })
+      // });
     });
 };
 
