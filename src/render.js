@@ -1,5 +1,6 @@
 const generateContainer = (container, i18n) => {
-  container.innerHTML = '';
+  const currentContainer = container;
+  currentContainer.innerHTML = '';
   const container1 = document.createElement('div');
   container1.classList.add('card', 'border-0');
   const titleContainer = document.createElement('div');
@@ -9,7 +10,7 @@ const generateContainer = (container, i18n) => {
   title.textContent = i18n.t('posts.title');
   container1.append(titleContainer);
   titleContainer.append(title);
-  container.append(container1);
+  currentContainer.append(container1);
   const list = document.createElement('ul');
   list.classList.add('list-group', 'border-0', 'rounded-0');
   return list;
@@ -49,8 +50,8 @@ const renderFeeds = (fidsContainer, fids, i18n) => {
   fidsContainer.append(fidsList);
 };
 
-const renderError = (errorElement, input, eror) => {
-  errorElement.textContent = eror;
+const renderError = (errorElement, input, error) => {
+  errorElement.textContent = error;
   errorElement.classList.remove('text-success');
   errorElement.classList.add('text-danger');
   input.classList.add('is-invalid');
@@ -113,8 +114,8 @@ const renderModalClose = (modalContainer, body, ui, posts, modalTitle, modalBody
   modalContainer.removeAttribute('aria-modal');
   modalContainer.setAttribute('style', 'display: none;');
 
-  // modalTitle.textContent = '';
-  // modalBody.textContent = '';
+  modalTitle.textContent = '';
+  modalBody.textContent = '';
 
   const footerLink = modalFooter.querySelector('a');
   const footerButton = modalFooter.querySelector('button');
@@ -126,7 +127,8 @@ const renderModalClose = (modalContainer, body, ui, posts, modalTitle, modalBody
 
 export default (elements, watchedState, i18n, path, currentValue) => {
   const {
-    input, errorElement, submitButton, fidsContainer, postsContainer, modalContainer, body, modalTitle, modalBody, modalFooter,
+    input, errorElement, submitButton, fidsContainer,
+    postsContainer, modalContainer, body, modalTitle, modalBody, modalFooter,
   } = elements;
   const {
     posts, fids, form, ui,
@@ -161,7 +163,7 @@ export default (elements, watchedState, i18n, path, currentValue) => {
       break;
 
     case ('posts'):
-      renderPosts(postsContainer, posts, i18n, ui); // получается посты обновляются не только каждые 5 сек, но и сразу полед загрузки нового фида?
+      renderPosts(postsContainer, posts, i18n, ui);
       break;
 
     case ('ui.visitedLinks'):
@@ -176,26 +178,7 @@ export default (elements, watchedState, i18n, path, currentValue) => {
       renderModalClose(modalContainer, body, ui, posts, modalTitle, modalBody, modalFooter);
       break;
 
-    case ('default'):
+    default:
       break;
   }
 };
-
-// const renderVisitedLinks = (ui, posts, postsContainer) => {
-
-//   ui.visitedLinks.forEach((id) => {
-//     const currentLink = postsContainer.querySelector(`[data-id="${id}"]`);
-//     console.log(currentLink);
-//     currentLink.classList.remove('fw-bold');
-//     currentLink.classList.add('fw-normal', 'link-secondary');
-//   })
-
-// posts.forEach(({ id }) => {
-//   if (Object.hasOwn(ui.visitedLinks, id)) {
-//     const currentLink = postsContainer.querySelector(`[data-id="${id}"]`);
-//     console.log(currentLink);
-//     currentLink.classList.remove('fw-bold');
-//     currentLink.classList.add('fw-normal', 'link-secondary');
-//   }
-// })
-// };

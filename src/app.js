@@ -57,13 +57,13 @@ const downloadData = (watchedState, validatedUrl, i18n) => axios.get(`https://al
   });
 
 const processData = (data, watchedState) => {
-  const title = data.querySelector('title').textContent;
-  const description = data.querySelector('description').textContent;
+  const titleFid = data.querySelector('title').textContent;
+  const descriptionFid = data.querySelector('description').textContent;
   const posts = data.querySelectorAll('item');
   const newFid = {
     id: uniqueId(),
-    title,
-    description,
+    title: titleFid,
+    description: descriptionFid,
   };
   watchedState.fids.unshift(newFid);
   posts.forEach((currentPost) => {
@@ -88,10 +88,10 @@ const checkPosts = (validatedUrl, watchedState) => {
       const data = rssParser(response.data.contents);
       const titleFid = data.querySelector('title').textContent;
       const currentPosts = data.querySelectorAll('item');
-      currentPosts.forEach((post) => {
-        const title = post.querySelector('title').textContent;
-        const description = post.querySelector('description').textContent;
-        const link = post.querySelector('link').textContent;
+      currentPosts.forEach((currentPost) => {
+        const title = currentPost.querySelector('title').textContent;
+        const description = currentPost.querySelector('description').textContent;
+        const link = currentPost.querySelector('link').textContent;
         if (!posts.find((post) => post.title === title)) {
           const currentFidId = fids.find((fid) => fid.title = titleFid);
           const newPost = {
@@ -109,8 +109,9 @@ const checkPosts = (validatedUrl, watchedState) => {
     .catch((e) => Promise.reject(e));
 };
 const updatePosts = (watchedState) => {
-  const promises = watchedState.form.validUrls.map((validatedUrl) => checkPosts(validatedUrl, watchedState)
-    .catch((e) => console.log(e)));
+  const promises = watchedState.form.validUrls
+    .map((validatedUrl) => checkPosts(validatedUrl, watchedState)
+      .catch((e) => console.log(e)));
   return Promise.all(promises)
     .then(() => setTimeout(() => updatePosts(watchedState), 5000));
 };
@@ -154,7 +155,7 @@ export default () => {
     resources,
   })
     .then(() => {
-      const watchedState = onChange(state, (path, currentValue, applyData) => render(elements, watchedState, i18n, path, currentValue, applyData));
+      const watchedState = onChange(state, (path, currentValue) => render(elements, watchedState, i18n, path, currentValue));
       updatePosts(watchedState);
       watchedState.status = 'filling';
       elements.form.addEventListener('submit', (event) => {
@@ -164,12 +165,10 @@ export default () => {
         validateUrl(currentUrl, watchedState, elements, i18n)
           .then((validatedUrl) => downloadData(watchedState, validatedUrl, i18n))
           .then((data) => processData(data, watchedState))
-          .catch((e) => console.log(e)); // в любом случае нужен кетч даже если он внутри validateUrl?
+          .catch((e) => console.log(e));
       });
-      // setTimeout(() => updatePosts(watchedState), 50000);
       elements.postsContainer.addEventListener('click', (event) => {
-        // event.preventDefault();
-        if (event.target.matches('a')) { // или event.target.tagName === 'A'
+        if (event.target.matches('a')) {
           const { id } = event.target.dataset;
           watchedState.ui.visitedLinks.push(id);
         }
@@ -180,38 +179,12 @@ export default () => {
           watchedState.ui.modalLinkId = id;
 
           elements.modalContainer.querySelectorAll('[data-bs-dismiss="modal"]').forEach((closeButton) => {
-            closeButton.addEventListener('click', (event) => {
-              event.preventDefault();
+            closeButton.addEventListener('click', (e) => {
+              e.preventDefault();
               watchedState.ui.modalLinkId = null;
             });
           });
         }
       });
-
-      // elements.modalContainer.querySelectorAll('[data-bs-dismiss="modal"]').forEach((closeButton) => {
-      //   closeButton.addEventListener('click', (event) => {
-      //     event.preventDefault();
-      //     watchedState.ui.modalLinkId = null;
-      //   })
-      // });
     });
 };
-
-// console.log(JSON.stringify(watchedState, null, '    '));
-
-// validateUrl(currentUrl, watchedState, elements, i18n)
-// .then((validatedUrl) => {
-//   setTimeout(function repeat() {
-//     newFunc(watchedState, validatedUrl, i18n);
-//     setTimeout(repeat, 5000);
-//   }, 1000);
-// })
-// .catch((e) => console.log(e)); // лишний если есть внутри validate?
-
-// const updateFids = (watchedState, i18n) => {
-//   const promises = watchedState.form.validUrls.map((url) => downloadData(watchedState, url, i18n)
-//     .then((data) => processingCurrentData(data, watchedState))
-//     .catch((e) => console.log(e)));
-//   return Promise.all(promises)
-//     .then(() => setTimeout(() => updateFids(watchedState, i18n), 5000));
-// };

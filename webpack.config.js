@@ -3,30 +3,27 @@ import path from 'path';
 
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
-import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';// добавил
+import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
-import { fileURLToPath } from 'url';// добавил
-import process from 'node:process'; // добавил
+import { fileURLToPath } from 'url';
+import process from 'node:process';
 
-const __filename = fileURLToPath(import.meta.url);// добавил
-const __dirname = path.dirname(__filename);// добавил
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const isProduction = process.env.NODE_ENV === 'production'; // неправильно наверное сделал сверху импорт
-
-// const stylesHandler = MiniCssExtractPlugin.loader;
+const isProduction = process.env.NODE_ENV === 'production';
 
 const config = {
   entry: path.resolve(__dirname, './src/index.js'),
   output: {
     filename: '[name][contenthash].js',
     path: path.resolve(__dirname, 'dist'),
-    clean: true, // должно удалять дист перед сборкой - кажется не удаляет
+    clean: true,
   },
   devServer: {
     open: true,
-    // host: 'localhost',
     port: 5000,
-    watchFiles: ['./index.html', './src/**/*'], // реагирует на изменения не только js файла
+    watchFiles: ['./index.html', './src/**/*'],
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -42,14 +39,11 @@ const config = {
     rules: [
       {
         test: /\.s[ac]ss$/i,
-        use: [MiniCssExtractPlugin.loader, 'css-loader', 'postcss-loader', 'sass-loader'], // работает справа налево
+        use: [MiniCssExtractPlugin.loader, 'css-loader', 'postcss-loader', 'sass-loader'],
       },
-      // Add your rules for custom modules here
-      // Learn more about loaders from https://webpack.js.org/loaders/
     ],
   },
-  optimization: { // есть указываем то перезатираем стандартную оптимизацию поэтому добавили TerserPlugin для jsфайла
-    // minimize: true, // если нужно минимизировать для дева тоже
+  optimization: {
     minimizer: [
       new CssMinimizerPlugin({
         minimizerOptions: {
@@ -61,7 +55,7 @@ const config = {
           ],
         },
       }),
-      new TerserPlugin({ // чтобы не было лишнего файла с лицензией
+      new TerserPlugin({
         terserOptions: {
           format: {
             comments: false,
