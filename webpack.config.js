@@ -18,12 +18,12 @@ const isProduction = process.env.NODE_ENV === 'production'; // неправил�
 const config = {
   entry: path.resolve(__dirname, './src/index.js'),
   output: {
-    filename: "[name][contenthash].js",
+    filename: '[name][contenthash].js',
     path: path.resolve(__dirname, 'dist'),
     clean: true, // должно удалять дист перед сборкой - кажется не удаляет
   },
   devServer: {
-    open: true, 
+    open: true,
     // host: 'localhost',
     port: 5000,
     watchFiles: ['./index.html', './src/**/*'], // реагирует на изменения не только js файла
@@ -34,7 +34,7 @@ const config = {
     }),
 
     new MiniCssExtractPlugin({
-      filename: "[name][contenthash].css",
+      filename: '[name][contenthash].css',
     }),
   ],
 
@@ -49,12 +49,12 @@ const config = {
     ],
   },
   optimization: { // есть указываем то перезатираем стандартную оптимизацию поэтому добавили TerserPlugin для jsфайла
-    // minimize: true, // если нужно минимизировать для дева тоже 
+    // minimize: true, // если нужно минимизировать для дева тоже
     minimizer: [
       new CssMinimizerPlugin({
         minimizerOptions: {
           preset: [
-            "default",
+            'default',
             {
               discardComments: { removeAll: true },
             },

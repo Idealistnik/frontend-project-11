@@ -47,7 +47,6 @@ const renderFeeds = (fidsContainer, fids, i18n) => {
     fidsList.append(listItem);
   });
   fidsContainer.append(fidsList);
-
 };
 
 const renderError = (errorElement, input, eror) => {
@@ -66,7 +65,6 @@ const clearError = (errorElement, input) => {
 };
 
 const renderDownload = (input, submitButton, errorElement, i18n, form) => {
-
   if (form.error === '') {
     input.removeAttribute('readonly');
     submitButton.removeAttribute('disabled');
@@ -79,11 +77,9 @@ const renderDownload = (input, submitButton, errorElement, i18n, form) => {
   }
   input.removeAttribute('readonly');
   submitButton.removeAttribute('disabled');
-
 };
 
 const renderModal = (modalContainer, body, ui, posts, modalTitle, modalBody, modalFooter) => {
-
   body.classList.add('modal-open');
   body.setAttribute('style', 'overflow: hidden; padding-right: 16px;');
   modalContainer.classList.add('show');
@@ -102,14 +98,12 @@ const renderModal = (modalContainer, body, ui, posts, modalTitle, modalBody, mod
   const footerLink = modalFooter.querySelector('a');
   const footerButton = modalFooter.querySelector('button');
 
-
   footerLink.outerHTML = `<a class="btn btn-primary full-article" href="${postLink}" role="button" target="_blank" rel="noopener noreferrer">Читать полностью </a>`;
 
   footerButton.outerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>';
 };
 
 const renderModalClose = (modalContainer, body, ui, posts, modalTitle, modalBody, modalFooter) => {
-
   body.classList.remove('modal-open');
   body.setAttribute('style', '');
   body.removeAttribute('overflow: hidden; padding-right: 16px;');
@@ -125,20 +119,20 @@ const renderModalClose = (modalContainer, body, ui, posts, modalTitle, modalBody
   const footerLink = modalFooter.querySelector('a');
   const footerButton = modalFooter.querySelector('button');
 
-
   footerLink.outerHTML = '<a class="btn btn-primary full-article" href="#" role="button" target="_blank" rel="noopener noreferrer">Читать полностью </a>';
 
   footerButton.outerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>';
 };
 
 export default (elements, watchedState, i18n, path, currentValue) => {
-
-  const { input, errorElement, submitButton, fidsContainer, postsContainer, modalContainer, body, modalTitle, modalBody, modalFooter } = elements;
-  const { posts, fids, form, ui } = watchedState;
-
+  const {
+    input, errorElement, submitButton, fidsContainer, postsContainer, modalContainer, body, modalTitle, modalBody, modalFooter,
+  } = elements;
+  const {
+    posts, fids, form, ui,
+  } = watchedState;
 
   switch (path) {
-
     case ('form.error'):
       if (currentValue) {
         renderError(errorElement, input, currentValue);
@@ -163,7 +157,6 @@ export default (elements, watchedState, i18n, path, currentValue) => {
       if (currentValue === 'rendering') {
         renderFeeds(fidsContainer, fids, i18n);
         renderPosts(postsContainer, posts, i18n, ui);
-        return;
       }
       break;
 
@@ -187,9 +180,6 @@ export default (elements, watchedState, i18n, path, currentValue) => {
       break;
   }
 };
-
-
-
 
 // const renderVisitedLinks = (ui, posts, postsContainer) => {
 

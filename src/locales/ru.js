@@ -1,7 +1,7 @@
 export default {
   translation: {
     languages: {
-      ru: 'Русский'
+      ru: 'Русский',
     },
     errors: {
       validation: {
@@ -13,7 +13,7 @@ export default {
         network: 'Ошибка сети',
         valid: 'Ресурс не содержит валидный RSS',
         downloaded: 'RSS успешно загружен',
-      }
+      },
     },
     posts: {
       title: 'Посты',
@@ -21,6 +21,6 @@ export default {
     },
     fids: {
       title: 'Фиды',
-    }
-  }
+    },
+  },
 };

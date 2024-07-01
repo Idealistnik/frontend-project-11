@@ -1,11 +1,11 @@
 import * as yup from 'yup';
 import onChange from 'on-change';
 import i18next from 'i18next';
+import axios from 'axios';
+import uniqueId from 'lodash/uniqueId.js';
 import render from './render.js';
 import resources from './locales/index.js';
-import axios from 'axios';
 import rssParser from './parser.js';
-import uniqueId from 'lodash/uniqueId.js';
 
 const validateUrl = (url, watchedState, elements, i18n) => {
   yup.setLocale({
@@ -15,7 +15,7 @@ const validateUrl = (url, watchedState, elements, i18n) => {
     },
     string: {
       url: i18n.t('errors.validation.valid'),
-    }
+    },
   });
   const schema = yup.string().url().required().notOneOf(watchedState.form.validUrls);
   return schema.validate(url)
@@ -34,30 +34,27 @@ const validateUrl = (url, watchedState, elements, i18n) => {
     });
 };
 
-const downloadData = (watchedState, validatedUrl, i18n) => {
-  return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(validatedUrl)}`)
-    .then((response) => {
-      const data = rssParser(response.data.contents);
-      const error = data.querySelector('parsererror');
-      if (error) {
-        watchedState.form.error = i18n.t('errors.request.valid');
-        watchedState.status = 'downloadFinish';
-        console.log(JSON.stringify(watchedState, null, '   '));
-        return Promise.reject(new Error(i18n.t('errors.request.valid')));
-      } else {
-        watchedState.form.validUrls.push(validatedUrl);
-        watchedState.status = 'downloadFinish';
-        return data;
-      }
-    })
-    .catch((error) => {
-      if (error.message !== i18n.t('errors.request.valid')) {
-        watchedState.form.error = i18n.t('errors.request.network');
-        watchedState.status = 'downloadFinish';
-      }
-      return Promise.reject(error);
-    });
-};
+const downloadData = (watchedState, validatedUrl, i18n) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(validatedUrl)}`)
+  .then((response) => {
+    const data = rssParser(response.data.contents);
+    const error = data.querySelector('parsererror');
+    if (error) {
+      watchedState.form.error = i18n.t('errors.request.valid');
+      watchedState.status = 'downloadFinish';
+      console.log(JSON.stringify(watchedState, null, '   '));
+      return Promise.reject(new Error(i18n.t('errors.request.valid')));
+    }
+    watchedState.form.validUrls.push(validatedUrl);
+    watchedState.status = 'downloadFinish';
+    return data;
+  })
+  .catch((error) => {
+    if (error.message !== i18n.t('errors.request.valid')) {
+      watchedState.form.error = i18n.t('errors.request.network');
+      watchedState.status = 'downloadFinish';
+    }
+    return Promise.reject(error);
+  });
 
 const processData = (data, watchedState) => {
   const title = data.querySelector('title').textContent;
@@ -67,7 +64,7 @@ const processData = (data, watchedState) => {
     id: uniqueId(),
     title,
     description,
-  }
+  };
   watchedState.fids.unshift(newFid);
   posts.forEach((currentPost) => {
     const title = currentPost.querySelector('title').textContent;
@@ -83,7 +80,6 @@ const processData = (data, watchedState) => {
     watchedState.posts.unshift(post);
   });
   watchedState.status = 'rendering';
-  return;
 };
 const checkPosts = (validatedUrl, watchedState) => {
   const { fids, posts } = watchedState;
@@ -104,15 +100,13 @@ const checkPosts = (validatedUrl, watchedState) => {
             title,
             description,
             link,
-          }
+          };
           watchedState.posts.unshift(newPost);
           //  console.log(JSON.stringify(watchedState.posts.length, null, '    '));
         }
-      })
+      });
     })
-    .catch((e) => {
-      return Promise.reject(e);
-    });
+    .catch((e) => Promise.reject(e));
 };
 const updatePosts = (watchedState) => {
   const promises = watchedState.form.validUrls.map((validatedUrl) => checkPosts(validatedUrl, watchedState)
@@ -133,7 +127,7 @@ export default () => {
     ui: {
       visitedLinks: [],
       modalLinkId: null,
-    }
+    },
   };
   const elements = {
     form: document.querySelector('.rss-form'),
@@ -160,7 +154,6 @@ export default () => {
     resources,
   })
     .then(() => {
-
       const watchedState = onChange(state, (path, currentValue, applyData) => render(elements, watchedState, i18n, path, currentValue, applyData));
       updatePosts(watchedState);
       watchedState.status = 'filling';
@@ -177,24 +170,24 @@ export default () => {
       elements.postsContainer.addEventListener('click', (event) => {
         // event.preventDefault();
         if (event.target.matches('a')) { // или event.target.tagName === 'A'
-          const id = event.target.dataset.id;
+          const { id } = event.target.dataset;
           watchedState.ui.visitedLinks.push(id);
         }
         if (event.target.matches('button')) {
           const link = event.target.previousElementSibling;
-          const id = link.dataset.id;
+          const { id } = link.dataset;
           watchedState.ui.visitedLinks.push(id);
           watchedState.ui.modalLinkId = id;
-          
+
           elements.modalContainer.querySelectorAll('[data-bs-dismiss="modal"]').forEach((closeButton) => {
             closeButton.addEventListener('click', (event) => {
               event.preventDefault();
               watchedState.ui.modalLinkId = null;
-            })
+            });
           });
         }
       });
-  
+
       // elements.modalContainer.querySelectorAll('[data-bs-dismiss="modal"]').forEach((closeButton) => {
       //   closeButton.addEventListener('click', (event) => {
       //     event.preventDefault();
@@ -203,7 +196,6 @@ export default () => {
       // });
     });
 };
-
 
 // console.log(JSON.stringify(watchedState, null, '    '));
 
@@ -215,8 +207,6 @@ export default () => {
 //   }, 1000);
 // })
 // .catch((e) => console.log(e)); // лишний если есть внутри validate?
-
-
 
 // const updateFids = (watchedState, i18n) => {
 //   const promises = watchedState.form.validUrls.map((url) => downloadData(watchedState, url, i18n)
