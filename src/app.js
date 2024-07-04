@@ -7,41 +7,33 @@ import render from './render.js';
 import resources from './locales/index.js';
 import rssParser from './parser.js';
 
-const validateUrl = (url, watchedState, elements, i18n) => {
-  yup.setLocale({
-    mixed: {
-      required: i18n.t('errors.validation.required'),
-      notOneOf: i18n.t('errors.validation.notOneOf'),
-    },
-    string: {
-      url: i18n.t('errors.validation.valid'),
-    },
+const validateUrl = (url, watchedState, elements, schema) => schema.validate(url)
+  .then((validUrl) => {
+    watchedState.form.error = '';
+    watchedState.status = 'downloadStart';
+    watchedState.form.validUrls.push(url);
+    return validUrl;
+  })
+  .catch((e) => {
+    watchedState.form.error = e.message;
+    elements.input.focus();
+    return Promise.reject(e);
   });
-  const schema = yup.string().url().required().notOneOf(watchedState.form.validUrls);
-  return schema.validate(url)
-    .then((validUrl) => {
-      watchedState.form.error = '';
-      watchedState.status = 'downloadStart';
-      return validUrl;
-    })
-    .catch((e) => {
-      watchedState.form.error = e.message;
-      elements.input.focus();
-      return Promise.reject(e);
-    });
+
+const getResponse = (url) => {
+  const searchParams = `disableCache=true&url=${encodeURIComponent(url)}`;
+  return axios.get(`https://allorigins.hexlet.app/get?${searchParams}`);
 };
 
-const downloadData = (watchedState, validatedUrl, i18n) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(validatedUrl)}`)
+const downloadData = (watchedState, validatedUrl, i18n) => getResponse(validatedUrl)
   .then((response) => {
     const data = rssParser(response.data.contents);
     const error = data.querySelector('parsererror');
     if (error) {
       watchedState.form.error = i18n.t('errors.request.valid');
       watchedState.status = 'downloadFinish';
-      console.log(JSON.stringify(watchedState, null, '   '));
       return Promise.reject(new Error(i18n.t('errors.request.valid')));
     }
-    watchedState.form.validUrls.push(validatedUrl);
     watchedState.status = 'downloadFinish';
     return data;
   })
@@ -54,22 +46,22 @@ const downloadData = (watchedState, validatedUrl, i18n) => axios.get(`https://al
   });
 
 const processData = (data, watchedState) => {
-  const titleFid = data.querySelector('title').textContent;
-  const descriptionFid = data.querySelector('description').textContent;
+  const titleFeed = data.querySelector('title').textContent;
+  const descriptionFeed = data.querySelector('description').textContent;
   const posts = data.querySelectorAll('item');
-  const newFid = {
+  const newFeed = {
     id: uniqueId(),
-    title: titleFid,
-    description: descriptionFid,
+    title: titleFeed,
+    description: descriptionFeed,
   };
-  watchedState.fids.unshift(newFid);
+  watchedState.feeds.unshift(newFeed);
   posts.forEach((currentPost) => {
     const title = currentPost.querySelector('title').textContent;
     const description = currentPost.querySelector('description').textContent;
     const link = currentPost.querySelector('link').textContent;
     const post = {
       id: uniqueId(),
-      idFid: newFid.id,
+      idFeed: newFeed.id,
       title,
       description,
       link,
@@ -79,27 +71,26 @@ const processData = (data, watchedState) => {
   watchedState.status = 'rendering';
 };
 const checkPosts = (validatedUrl, watchedState) => {
-  const { fids, posts } = watchedState;
-  return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(validatedUrl)}`)
+  const { feeds, posts } = watchedState;
+  return getResponse(validatedUrl)
     .then((response) => {
       const data = rssParser(response.data.contents);
-      const titleFid = data.querySelector('title').textContent;
+      const titleFeed = data.querySelector('title').textContent;
       const currentPosts = data.querySelectorAll('item');
       currentPosts.forEach((currentPost) => {
         const title = currentPost.querySelector('title').textContent;
         const description = currentPost.querySelector('description').textContent;
         const link = currentPost.querySelector('link').textContent;
         if (!posts.find((post) => post.title === title)) {
-          const currentFidId = fids.find((fid) => fid.title === titleFid);
+          const currentFeedId = feeds.find((feed) => feed.title === titleFeed);
           const newPost = {
             id: uniqueId(),
-            idFid: currentFidId,
+            idFeed: currentFeedId,
             title,
             description,
             link,
           };
           watchedState.posts.unshift(newPost);
-          //  console.log(JSON.stringify(watchedState.posts.length, null, '    '));
         }
       });
     })
@@ -108,9 +99,10 @@ const checkPosts = (validatedUrl, watchedState) => {
 const updatePosts = (watchedState) => {
   const promises = watchedState.form.validUrls
     .map((validatedUrl) => checkPosts(validatedUrl, watchedState)
-      .catch((e) => console.log(e)));
+      .catch((e) => console.error(e)));
+  const requestInterval = 5000;
   return Promise.all(promises)
-    .then(() => setTimeout(() => updatePosts(watchedState), 5000));
+    .then(() => setTimeout(() => updatePosts(watchedState), requestInterval));
 };
 
 export default () => {
@@ -120,7 +112,7 @@ export default () => {
       error: '',
     },
     status: '',
-    fids: [],
+    feeds: [],
     posts: [],
     ui: {
       visitedLinks: [],
@@ -128,19 +120,21 @@ export default () => {
     },
   };
   const elements = {
+    body: document.querySelector('body'),
     form: document.querySelector('.rss-form'),
     input: document.querySelector('#url-input'),
     errorElement: document.querySelector('.feedback'),
     submitButton: document.querySelector('.rss-form button'),
     postsContainer: document.querySelector('.posts'),
-    fidsContainer: document.querySelector('.feeds'),
-    modalContainer: document.querySelector('.modal'),
-    modalTitle: document.querySelector('.modal-title'),
-    modalBody: document.querySelector('.modal-body'),
-    modalCloseButton: document.querySelector('.close'),
-    modalFooter: document.querySelector('.modal-footer'),
-    modalFooterCloseButton: document.querySelector('[data-bs-dismiss="modal"].btn-secondary'),
-    body: document.querySelector('body'),
+    feedsContainer: document.querySelector('.feeds'),
+    modal: {
+      modalContainer: document.querySelector('.modal'),
+      modalTitle: document.querySelector('.modal-title'),
+      modalBody: document.querySelector('.modal-body'),
+      modalCloseButton: document.querySelector('.close'),
+      modalFooter: document.querySelector('.modal-footer'),
+      modalFooterCloseButton: document.querySelector('[data-bs-dismiss="modal"].btn-secondary'),
+    },
   };
   const i18n = i18next.createInstance();
   const defaultLang = 'ru';
@@ -154,17 +148,31 @@ export default () => {
         state,
         (path, currentValue) => render(elements, watchedState, i18n, path, currentValue),
       );
+
+      yup.setLocale({
+        mixed: {
+          required: i18n.t('errors.validation.required'),
+          notOneOf: i18n.t('errors.validation.notOneOf'),
+        },
+        string: {
+          url: i18n.t('errors.validation.valid'),
+        },
+      });
+
       updatePosts(watchedState);
       watchedState.status = 'filling';
+
       elements.form.addEventListener('submit', (event) => {
+        const schema = yup.string().url().required().notOneOf(watchedState.form.validUrls);
         event.preventDefault();
-        const currentInput = event.target.querySelector('[name="url"]');
-        const currentUrl = currentInput.value;
-        validateUrl(currentUrl, watchedState, elements, i18n)
+        const currentData = new FormData(event.target);
+        const currentUrl = currentData.get('url');
+        validateUrl(currentUrl, watchedState, elements, schema)
           .then((validatedUrl) => downloadData(watchedState, validatedUrl, i18n))
           .then((data) => processData(data, watchedState))
-          .catch((e) => console.log(e));
+          .catch((e) => console.error(e));
       });
+
       elements.postsContainer.addEventListener('click', (event) => {
         if (event.target.matches('a')) {
           const { id } = event.target.dataset;
@@ -176,7 +184,7 @@ export default () => {
           watchedState.ui.visitedLinks.push(id);
           watchedState.ui.modalLinkId = id;
 
-          elements.modalContainer.querySelectorAll('[data-bs-dismiss="modal"]').forEach((closeButton) => {
+          elements.modal.modalContainer.querySelectorAll('[data-bs-dismiss="modal"]').forEach((closeButton) => {
             closeButton.addEventListener('click', (e) => {
               e.preventDefault();
               watchedState.ui.modalLinkId = null;

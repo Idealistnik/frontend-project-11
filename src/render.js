@@ -1,6 +1,5 @@
 const generateContainer = (container, i18n) => {
-  const currentContainer = container;
-  currentContainer.innerHTML = '';
+  container.innerHTML = '';
   const container1 = document.createElement('div');
   container1.classList.add('card', 'border-0');
   const titleContainer = document.createElement('div');
@@ -10,7 +9,7 @@ const generateContainer = (container, i18n) => {
   title.textContent = i18n.t('posts.title');
   container1.append(titleContainer);
   titleContainer.append(title);
-  currentContainer.append(container1);
+  container.append(container1);
   const list = document.createElement('ul');
   list.classList.add('list-group', 'border-0', 'rounded-0');
   return list;
@@ -33,21 +32,21 @@ const renderPosts = (postsContainer, posts, i18n, ui) => {
   postsContainer.append(postsList);
 };
 
-const renderFeeds = (fidsContainer, fids, i18n) => {
-  const fidsList = generateContainer(fidsContainer, i18n);
-  fids.forEach((fid) => {
+const renderFeeds = (feedsContainer, feeds, i18n) => {
+  const feedsList = generateContainer(feedsContainer, i18n);
+  feeds.forEach((feed) => {
     const listItem = document.createElement('li');
     listItem.classList.add('list-group-item', 'border-0', 'border-end-0');
     const title = document.createElement('h3');
     title.classList.add('h6', 'm-0');
-    title.textContent = fid.title;
+    title.textContent = feed.title;
     const text = document.createElement('p');
     text.classList.add('m-0', 'small', 'text-black-50');
-    text.textContent = fid.description;
+    text.textContent = feed.description;
     listItem.append(title, text);
-    fidsList.append(listItem);
+    feedsList.append(listItem);
   });
-  fidsContainer.append(fidsList);
+  feedsContainer.append(feedsList);
 };
 
 const renderError = (errorElement, input, error) => {
@@ -66,18 +65,15 @@ const clearError = (errorElement, input) => {
 };
 
 const renderDownload = (input, submitButton, errorElement, i18n, form) => {
+  input.removeAttribute('readonly');
+  submitButton.removeAttribute('disabled');
   if (form.error === '') {
-    input.removeAttribute('readonly');
-    submitButton.removeAttribute('disabled');
     errorElement.classList.remove('text-danger');
     errorElement.classList.add('text-success');
     errorElement.textContent = i18n.t('errors.request.downloaded');
     input.value = '';
     input.focus();
-    return;
   }
-  input.removeAttribute('readonly');
-  submitButton.removeAttribute('disabled');
 };
 
 const renderModal = (modalContainer, body, ui, posts, modalTitle, modalBody, modalFooter) => {
@@ -89,16 +85,14 @@ const renderModal = (modalContainer, body, ui, posts, modalTitle, modalBody, mod
   modalContainer.setAttribute('style', 'display: block;');
 
   const currentPost = posts.find(({ id }) => id === ui.modalLinkId);
-  const postTitle = currentPost.title;
-  const postDescription = currentPost.description;
-  const postLink = currentPost.link;
+  const { title, description, link } = currentPost;
 
-  modalTitle.textContent = postTitle;
-  modalBody.textContent = postDescription;
+  modalTitle.textContent = title;
+  modalBody.textContent = description;
 
   const footerLink = modalFooter.querySelector('a');
   const footerButton = modalFooter.querySelector('button');
-  footerLink.outerHTML = `<a class="btn btn-primary full-article" href="${postLink}" role="button" target="_blank" rel="noopener noreferrer">Читать полностью </a>`;
+  footerLink.outerHTML = `<a class="btn btn-primary full-article" href="${link}" role="button" target="_blank" rel="noopener noreferrer">Читать полностью </a>`;
   footerButton.outerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>';
 };
 
@@ -121,11 +115,14 @@ const renderModalClose = (modalContainer, body) => {
 
 export default (elements, watchedState, i18n, path, currentValue) => {
   const {
-    input, errorElement, submitButton, fidsContainer,
-    postsContainer, modalContainer, body, modalTitle, modalBody, modalFooter,
+    input, errorElement, submitButton, feedsContainer,
+    postsContainer, body,
   } = elements;
   const {
-    posts, fids, form, ui,
+    modalContainer, modalTitle, modalFooter, modalBody,
+  } = elements.modal;
+  const {
+    posts, feeds, form, ui,
   } = watchedState;
 
   switch (path) {
@@ -149,15 +146,12 @@ export default (elements, watchedState, i18n, path, currentValue) => {
       }
 
       if (currentValue === 'rendering') {
-        renderFeeds(fidsContainer, fids, i18n);
+        renderFeeds(feedsContainer, feeds, i18n);
         renderPosts(postsContainer, posts, i18n, ui);
       }
       break;
 
     case ('posts'):
-      renderPosts(postsContainer, posts, i18n, ui);
-      break;
-
     case ('ui.visitedLinks'):
       renderPosts(postsContainer, posts, i18n, ui);
       break;

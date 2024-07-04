@@ -2,7 +2,7 @@
   "name": "@hexlet/code",
   "version": "1.0.0",
   "description": "https://frontend-project-11-blush-five.vercel.app/",
-  "main": ".src/index.js",
+  "main": "./src/app.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -14,7 +14,7 @@
     "watch": "webpack --watch",
     "serve": "webpack serve"
   },
-  "author": "",
+  "author": "Pavlov Nikita",
   "license": "ISC",
   "devDependencies": {
     "@babel/core": "^7.24.7",
@@ -40,6 +40,8 @@
     "postcss": "^8.4.38",
     "postcss-loader": "^8.1.1",
     "postcss-preset-env": "^9.5.14",
+    "sass": "^1.77.6",
+    "sass-loader": "^14.2.1",
     "style-loader": "^4.0.0",
     "terser-webpack-plugin": "^5.3.10",
     "url-loader": "^4.1.1",
@@ -52,10 +54,7 @@
     "bootstrap": "^5.3.3",
     "i18next": "^23.11.5",
     "lodash": "^4.17.21",
-    "npm-check-updates": "^16.14.20",
     "on-change": "^5.0.1",
-    "sass": "^1.77.6",
-    "sass-loader": "^14.2.1",
     "yup": "^1.4.0"
   }
 }

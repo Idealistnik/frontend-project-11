@@ -1,6 +1,5 @@
 // Generated using webpack-cli https://github.com/webpack/webpack-cli
 import path from 'path';
-
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
