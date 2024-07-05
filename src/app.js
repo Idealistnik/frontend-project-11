@@ -11,7 +11,6 @@ const validateUrl = (url, watchedState, elements, schema) => schema.validate(url
   .then((validUrl) => {
     watchedState.form.error = '';
     watchedState.status = 'downloadStart';
-    watchedState.form.validUrls.push(url);
     return validUrl;
   })
   .catch((e) => {
@@ -27,65 +26,42 @@ const getResponse = (url) => {
 
 const downloadData = (watchedState, validatedUrl, i18n) => getResponse(validatedUrl)
   .then((response) => {
-    const data = rssParser(response.data.contents);
-    const error = data.querySelector('parsererror');
-    if (error) {
-      watchedState.form.error = i18n.t('errors.request.valid');
+    const result = rssParser(response.data.contents, watchedState, i18n);
+
+    if (result === i18n.t('errors.request.valid')) {
       watchedState.status = 'downloadFinish';
-      return Promise.reject(new Error(i18n.t('errors.request.valid')));
+      return;
     }
+    watchedState.form.validUrls.push(validatedUrl);
     watchedState.status = 'downloadFinish';
-    return data;
+    const [newFeedInfo, postsList] = rssParser(response.data.contents, watchedState, i18n);
+    const newFeed = { id: uniqueId(), ...newFeedInfo };
+    watchedState.feeds.unshift(newFeed);
+    postsList.forEach((currentPost) => {
+      const post = { id: uniqueId(), idFeed: newFeed.id, ...currentPost };
+      watchedState.posts.unshift(post);
+    });
+    watchedState.status = 'rendering';
   })
   .catch((error) => {
-    if (error.message !== i18n.t('errors.request.valid')) {
-      watchedState.form.error = i18n.t('errors.request.network');
-      watchedState.status = 'downloadFinish';
-    }
+    watchedState.form.error = i18n.t('errors.request.network');
+    watchedState.status = 'downloadFinish';
     return Promise.reject(error);
   });
 
-const processData = (data, watchedState) => {
-  const titleFeed = data.querySelector('title').textContent;
-  const descriptionFeed = data.querySelector('description').textContent;
-  const posts = data.querySelectorAll('item');
-  const newFeed = {
-    id: uniqueId(),
-    title: titleFeed,
-    description: descriptionFeed,
-  };
-  watchedState.feeds.unshift(newFeed);
-  posts.forEach((currentPost) => {
-    const title = currentPost.querySelector('title').textContent;
-    const description = currentPost.querySelector('description').textContent;
-    const link = currentPost.querySelector('link').textContent;
-    const post = {
-      id: uniqueId(),
-      idFeed: newFeed.id,
-      title,
-      description,
-      link,
-    };
-    watchedState.posts.unshift(post);
-  });
-  watchedState.status = 'rendering';
-};
-const checkPosts = (validatedUrl, watchedState) => {
+const checkPosts = (validatedUrl, watchedState, i18n) => {
   const { feeds, posts } = watchedState;
   return getResponse(validatedUrl)
     .then((response) => {
-      const data = rssParser(response.data.contents);
-      const titleFeed = data.querySelector('title').textContent;
-      const currentPosts = data.querySelectorAll('item');
-      currentPosts.forEach((currentPost) => {
-        const title = currentPost.querySelector('title').textContent;
-        const description = currentPost.querySelector('description').textContent;
-        const link = currentPost.querySelector('link').textContent;
+      const [{ titleFeed }, postsList] = rssParser(response.data.contents, watchedState, i18n);
+      postsList.forEach((currentPost) => {
+        const { title, description, link } = currentPost;
+
         if (!posts.find((post) => post.title === title)) {
-          const currentFeedId = feeds.find((feed) => feed.title === titleFeed);
+          const currentFeed = feeds.find((feed) => feed.titleFeed === titleFeed);
           const newPost = {
             id: uniqueId(),
-            idFeed: currentFeedId,
+            idFeed: currentFeed.id,
             title,
             description,
             link,
@@ -98,7 +74,7 @@ const checkPosts = (validatedUrl, watchedState) => {
 };
 const updatePosts = (watchedState) => {
   const promises = watchedState.form.validUrls
-    .map((validatedUrl) => checkPosts(validatedUrl, watchedState)
+    .map((validatedUrl) => checkPosts(validatedUrl, watchedState, i18next)
       .catch((e) => console.error(e)));
   const requestInterval = 5000;
   return Promise.all(promises)
@@ -169,7 +145,6 @@ export default () => {
         const currentUrl = currentData.get('url');
         validateUrl(currentUrl, watchedState, elements, schema)
           .then((validatedUrl) => downloadData(watchedState, validatedUrl, i18n))
-          .then((data) => processData(data, watchedState))
           .catch((e) => console.error(e));
       });
 

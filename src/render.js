@@ -1,48 +1,55 @@
-const generateContainer = (container, i18n) => {
+const createElementWithClasses = (tag, ...classes) => {
+  const element = document.createElement(tag);
+  element.classList.add(...classes);
+  return element;
+};
+
+const generateContainer = (container, titleText) => {
   container.innerHTML = '';
-  const container1 = document.createElement('div');
-  container1.classList.add('card', 'border-0');
-  const titleContainer = document.createElement('div');
-  titleContainer.classList.add('card-body');
-  const title = document.createElement('h2');
-  title.classList.add('card-title', 'h4');
-  title.textContent = i18n.t('posts.title');
-  container1.append(titleContainer);
+
+  const containerDiv = createElementWithClasses('div', 'card', 'border-0');
+  const titleContainer = createElementWithClasses('div', 'card-body');
+  const title = createElementWithClasses('h2', 'card-title', 'h4');
+
+  title.textContent = titleText;
+
+  containerDiv.append(titleContainer);
   titleContainer.append(title);
-  container.append(container1);
-  const list = document.createElement('ul');
-  list.classList.add('list-group', 'border-0', 'rounded-0');
+  container.append(containerDiv);
+
+  const list = createElementWithClasses('ul', 'list-group', 'border-0', 'rounded-0');
   return list;
 };
 
 const renderPosts = (postsContainer, posts, i18n, ui) => {
-  const postsList = generateContainer(postsContainer, i18n);
+  const postsList = generateContainer(postsContainer, i18n.t('posts.title'));
+
   posts.forEach((post) => {
-    const listItem = document.createElement('li');
-    listItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
-    const link = document.createElement('a');
-    listItem.append(link);
-    const currentClassList = ui.visitedLinks.includes(post.id) ? 'fw-normal link-secondary' : 'fw-bold';
-    link.outerHTML = `<a href="${post.link}" class="${currentClassList}" data-id="${post.id}" target="_blank" rel="noopener noreferrer">${post.title}</a>`;
-    const button = document.createElement('button');
-    listItem.append(button);
-    button.outerHTML = `<button type="button" class="btn btn-outline-primary btn-sm" data-id=${post.id} data-bs-toggle="modal" data-bs-target="#modal">${i18n.t('posts.button')}</button>`;
+    const listItem = createElementWithClasses('li', 'list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
+
+    const linkClassList = ui.visitedLinks.includes(post.id) ? 'fw-normal link-secondary' : 'fw-bold';
+    const link = `<a href="${post.link}" class="${linkClassList}" data-id="${post.id}" target="_blank" rel="noopener noreferrer">${post.title}</a>`;
+
+    const button = `<button type="button" class="btn btn-outline-primary btn-sm" data-id=${post.id} data-bs-toggle="modal" data-bs-target="#modal">${i18n.t('posts.button')}</button>`;
+
+    listItem.innerHTML = link + button;
     postsList.append(listItem);
   });
   postsContainer.append(postsList);
 };
 
 const renderFeeds = (feedsContainer, feeds, i18n) => {
-  const feedsList = generateContainer(feedsContainer, i18n);
+  const feedsList = generateContainer(feedsContainer, i18n.t('feeds.title'));
+
   feeds.forEach((feed) => {
-    const listItem = document.createElement('li');
-    listItem.classList.add('list-group-item', 'border-0', 'border-end-0');
-    const title = document.createElement('h3');
-    title.classList.add('h6', 'm-0');
-    title.textContent = feed.title;
-    const text = document.createElement('p');
-    text.classList.add('m-0', 'small', 'text-black-50');
-    text.textContent = feed.description;
+    const listItem = createElementWithClasses('li', 'list-group-item', 'border-0', 'border-end-0');
+
+    const title = createElementWithClasses('h3', 'list-group-item', 'border-0', 'border-end-0');
+    title.textContent = feed.titleFeed;
+
+    const text = createElementWithClasses('p', 'm-0', 'small', 'text-black-50');
+    text.textContent = feed.descriptionFeed;
+
     listItem.append(title, text);
     feedsList.append(listItem);
   });
@@ -91,9 +98,7 @@ const renderModal = (modalContainer, body, ui, posts, modalTitle, modalBody, mod
   modalBody.textContent = description;
 
   const footerLink = modalFooter.querySelector('a');
-  const footerButton = modalFooter.querySelector('button');
-  footerLink.outerHTML = `<a class="btn btn-primary full-article" href="${link}" role="button" target="_blank" rel="noopener noreferrer">Читать полностью </a>`;
-  footerButton.outerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>';
+  footerLink.setAttribute('href', `${link}`);
 };
 
 const renderModalClose = (modalContainer, body) => {
@@ -107,10 +112,39 @@ const renderModalClose = (modalContainer, body) => {
   modalContainer.setAttribute('style', 'display: none;');
 
   const footerLink = document.querySelector('.modal-footer a');
-  const footerButton = document.querySelector('.modal-footer button');
+  footerLink.setAttribute('href', '#');
+};
 
-  footerLink.outerHTML = '<a class="btn btn-primary full-article" href="#" role="button" target="_blank" rel="noopener noreferrer">Читать полностью </a>';
-  footerButton.outerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>';
+const renderStatus = (
+  statusValue,
+  ui,
+  i18n,
+  {
+    input,
+    submitButton,
+    errorElement,
+    form,
+    feedsContainer,
+    feeds,
+    postsContainer,
+    posts,
+  },
+) => {
+  switch (statusValue) {
+    case ('downloadStart'):
+      input.setAttribute('readonly', 'true');
+      submitButton.setAttribute('disabled', '');
+      break;
+    case ('downloadFinish'):
+      renderDownload(input, submitButton, errorElement, i18n, form);
+      break;
+    case ('rendering'):
+      renderFeeds(feedsContainer, feeds, i18n);
+      renderPosts(postsContainer, posts, i18n, ui);
+      break;
+    default:
+      break;
+  }
 };
 
 export default (elements, watchedState, i18n, path, currentValue) => {
@@ -135,20 +169,21 @@ export default (elements, watchedState, i18n, path, currentValue) => {
       break;
 
     case ('status'):
-
-      if (currentValue === 'downloadStart') {
-        input.setAttribute('readonly', 'true');
-        submitButton.setAttribute('disabled', '');
-      }
-
-      if (currentValue === 'downloadFinish') {
-        renderDownload(input, submitButton, errorElement, i18n, form);
-      }
-
-      if (currentValue === 'rendering') {
-        renderFeeds(feedsContainer, feeds, i18n);
-        renderPosts(postsContainer, posts, i18n, ui);
-      }
+      renderStatus(
+        currentValue,
+        ui,
+        i18n,
+        {
+          input,
+          submitButton,
+          errorElement,
+          form,
+          feedsContainer,
+          feeds,
+          postsContainer,
+          posts,
+        },
+      );
       break;
 
     case ('posts'):
