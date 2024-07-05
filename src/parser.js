@@ -6,7 +6,7 @@ export default (data, watchedState, i18n) => {
     watchedState.form.error = i18n.t('errors.request.valid');
     return i18n.t('errors.request.valid');
   }
- 
+
   const titleFeed = parsedData.querySelector('title').textContent;
   const descriptionFeed = parsedData.querySelector('description').textContent;
   const postsRaw = parsedData.querySelectorAll('item');
@@ -15,7 +15,7 @@ export default (data, watchedState, i18n) => {
     titleFeed,
     descriptionFeed,
   };
-  
+
   const postsList = posts.map((currentPost) => {
     const title = currentPost.querySelector('title').textContent;
     const description = currentPost.querySelector('description').textContent;
