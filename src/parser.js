@@ -4,8 +4,8 @@ export default (data, watchedState, i18n) => {
   const error = parsedData.querySelector('parsererror');
   if (error) {
     watchedState.form.error = i18n.t('errors.request.valid');
-    // return;
-    return i18n.t('errors.request.valid');
+    return;
+    // return i18n.t('errors.request.valid');
   }
 
   const titleFeed = parsedData.querySelector('title').textContent;
