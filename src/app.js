@@ -26,15 +26,18 @@ const getResponse = (url) => {
 
 const downloadData = (watchedState, validatedUrl, i18n) => getResponse(validatedUrl)
   .then((response) => {
-    const result = rssParser(response.data.contents, watchedState, i18n);
-
-    if (result === i18n.t('errors.request.valid')) {
+    // const result = rssParser(response.data.contents, watchedState, i18n);
+    // const [newFeedInfo, postsList] = result;
+    const [newFeedInfo, postsList] = rssParser(response.data.contents, watchedState, i18n);
+    if (watchedState.form.error.isParsingError) {
       watchedState.status = 'downloadFinish';
+      watchedState.form.error = i18n.t('errors.request.valid');
+      // watchedState.form.error = '';
       return;
     }
     watchedState.form.validUrls.push(validatedUrl);
     watchedState.status = 'downloadFinish';
-    const [newFeedInfo, postsList] = rssParser(response.data.contents, watchedState, i18n);
+    // const [newFeedInfo, postsList] = rssParser(response.data.contents, watchedState, i18n);
     const newFeed = { id: uniqueId(), ...newFeedInfo };
     watchedState.feeds.unshift(newFeed);
     postsList.forEach((currentPost) => {
