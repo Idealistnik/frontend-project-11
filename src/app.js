@@ -29,10 +29,8 @@ const downloadData = (watchedState, validatedUrl, i18n) => getResponse(validated
     // const result = rssParser(response.data.contents, watchedState, i18n);
     // const [newFeedInfo, postsList] = result;
     const [newFeedInfo, postsList] = rssParser(response.data.contents, watchedState, i18n);
-    if (watchedState.form.error.isParsingError) {
+    if (watchedState.form.error) {
       watchedState.status = 'downloadFinish';
-      watchedState.form.error = i18n.t('errors.request.valid');
-      // watchedState.form.error = '';
       return;
     }
     watchedState.form.validUrls.push(validatedUrl);
