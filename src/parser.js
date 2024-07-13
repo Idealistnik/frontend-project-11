@@ -1,9 +1,10 @@
 export default (data) => {
   const parser = new DOMParser();
   const parsedData = parser.parseFromString(data, 'application/xml');
-  const error1 = parsedData.querySelector('parsererror');
-  if (error1) {
-    const error = new Error();
+  const parsedDataError = parsedData.querySelector('parsererror');
+
+  if (parsedDataError) {
+    const error = new Error('ParsedDataError');
     error.isParseError = true;
     throw error;
   }
