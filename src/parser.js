@@ -1,11 +1,11 @@
-export default (data, watchedState, i18n) => {
+export default (data) => {
   const parser = new DOMParser();
   const parsedData = parser.parseFromString(data, 'application/xml');
-  const error = parsedData.querySelector('parsererror');
-  if (error) {
-    watchedState.form.error = i18n.t('errors.request.valid');
-    return;
-    // return i18n.t('errors.request.valid');
+  const error1 = parsedData.querySelector('parsererror');
+  if (error1) {
+    const error = new Error();
+    error.isParseError = true;
+    throw error;
   }
 
   const titleFeed = parsedData.querySelector('title').textContent;
